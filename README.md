@@ -1,5 +1,20 @@
-![License](https://img.shields.io/badge/license-Apache%202-green.svg?style=flat)
+![License](https://img.shields.io/badge/license-Apache%202-green.svg?style=flat) [![codecov](https://codecov.io/gh/passsy/ArrayAdapter/branch/master/graph/badge.svg)](https://codecov.io/gh/passsy/ArrayAdapter)
 # ArrayAdapter for RecyclerView
+
+`RecyclerView` doesn't ship a ready to go `RecyclerView.Adapter` implementation as `ListView` did with the `ArrayAdapter`. This library is this missing `ArrayAdapter`.
+
+- Easy to use
+- Same API as `ArrayAdapter` for `ListView` 
+- Notifies the `RecyclerView` correctly about changes (`notifyItem*()`) for smooth animations
+- Use `swap(List newItems)` to swap data. `DiffUtils` takes care of `notifyItem*()` calls
+
+## Download
+
+```gradle
+dependencies {
+    compile 'com.pascalwelsch.arrayadapter:arrayadapater:1.0.0'
+}
+```
 
 
 ## License
