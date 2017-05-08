@@ -52,5 +52,5 @@ publish {
     artifactId = 'arrayadapter'
     uploadName = 'ArrayAdapter'
     description = 'the missing ArrayAdapter implementation for RecyclerView'
-    website = 'https://github.com/grandcentrix/ThirtyInch'
+    website = 'https://github.com/passsy/ArrayAdapter'
 }
