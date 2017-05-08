@@ -95,6 +95,9 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      * Remove all elements from the list.
      */
     public void clear() {
+        if (mObjects.isEmpty()) {
+            return;
+        }
         final int size;
         synchronized (mLock) {
             size = getItemCount();
@@ -143,11 +146,14 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      */
     public void remove(@Nullable T object) {
         final int position;
+        final boolean remove;
         synchronized (mLock) {
             position = getPosition(object);
-            mObjects.remove(object);
+            remove = mObjects.remove(object);
         }
-        notifyItemRemoved(position);
+        if (remove) {
+            notifyItemRemoved(position);
+        }
     }
 
     public void replaceItem(final T oldObject, final T newObject) {
@@ -157,7 +163,8 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
             mObjects.remove(position);
             mObjects.add(position, newObject);
         }
-        notifyItemChanged(position);
+        notifyItemRangeRemoved(position, 1);
+        notifyItemRangeInserted(position, 1);
     }
 
     /**
