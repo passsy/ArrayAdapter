@@ -37,15 +37,7 @@ captures/
 /.idea/*
 
 # IDEA/Android Studio Ignore exceptions
-!/.idea/vcs.xml
-!/.idea/fileTemplates/
-!/.idea/inspectionProfiles/
-!/.idea/scopes/
 !/.idea/codeStyleSettings.xml
-!/.idea/encodings.xml
-!/.idea/copyright/
-!/.idea/compiler.xml
-
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
