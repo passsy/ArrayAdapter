@@ -27,10 +27,13 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Simple adapter implementation analog to {@link android.widget.ArrayAdapter} for {@link
- * android.support.v7.widget.RecyclerView}. Holds to a list of objects of type {@link T}
+ * Simple {@link RecyclerView.Adapter} implementation analog to {@link android.widget.ArrayAdapter}
+ * for {@link android.support.v7.widget.RecyclerView}. Holds to a list of objects of type {@link T}
  *
- * Created by Pascal Welsch on 04.07.14.
+ * @param <T>  item type (a immutable pojo works best)
+ * @param <VH> {@link RecyclerView.ViewHolder} for item {@link T}
+ * @author Pascal Welsch on 04.07.14.
+ *         Major update 09.05.17.
  */
 @SuppressWarnings("WeakerAccess")
 public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
@@ -42,14 +45,18 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      */
     private final Object mLock = new Object();
 
-    private List<T> mObjects;
+    private final List<T> mObjects = new ArrayList<>();
 
-    public ArrayAdapter(@Nullable final List<T> objects) {
-        mObjects = objects != null ? objects : new ArrayList<T>();
+    @SuppressWarnings("ConstantConditions")
+    public ArrayAdapter(@NonNull final List<T> objects) {
+        if (objects == null) {
+            throw new IllegalStateException("null is not supported. Use an empty list.");
+        }
+        addAll(objects);
     }
 
     public ArrayAdapter() {
-        this(null);
+
     }
 
     /**
@@ -57,7 +64,8 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      *
      * @param object The object to add at the end of the array.
      */
-    public void add(@Nullable final T object) {
+    public void add(@NonNull final T object) {
+        requireNotNullItem(object);
         final int position;
         synchronized (mLock) {
             position = getItemCount();
@@ -79,7 +87,10 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         final int position;
         synchronized (mLock) {
             position = getItemCount();
-            mObjects.addAll(collection);
+            for (final T item : collection) {
+                requireNotNullItem(item);
+                mObjects.add(item);
+            }
         }
         notifyItemRangeInserted(position, length);
     }
@@ -98,7 +109,10 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         final int position;
         synchronized (mLock) {
             position = getItemCount();
-            Collections.addAll(mObjects, items);
+            for (final T item : items) {
+                requireNotNullItem(item);
+                mObjects.add(item);
+            }
         }
         notifyItemRangeInserted(position, length);
     }
@@ -118,8 +132,17 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         notifyItemRangeRemoved(0, size);
     }
 
+    /**
+     * Returns the item at the specified position.
+     *
+     * @param position index of the item to return
+     * @return the item at the specified position or {@code null} when not found
+     */
     @Nullable
     public T getItem(final int position) {
+        if (position < 0 || position >= mObjects.size()) {
+            return null;
+        }
         return mObjects.get(position);
     }
 
@@ -136,15 +159,16 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      * @param item for which a stable id should be generated
      * @return a identifier for the given item
      */
+    @Nullable
     public abstract Object getItemId(@NonNull T item);
 
     /**
      * Returns the position of the specified item in the array.
      *
      * @param item The item to retrieve the position of.
-     * @return The position of the specified item.
+     * @return The position of the specified item or -1 if there is no such item.
      */
-    public int getPosition(@Nullable final T item) {
+    public int getPosition(@NonNull final T item) {
         return mObjects.indexOf(item);
     }
 
@@ -154,7 +178,8 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      * @param object The object to insert into the array.
      * @param index  The index at which the object must be inserted.
      */
-    public void insert(@Nullable T object, int index) {
+    public void insert(@NonNull T object, int index) {
+        requireNotNullItem(object);
         synchronized (mLock) {
             mObjects.add(index, object);
         }
@@ -212,14 +237,14 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      *
      * @param object The object to remove.
      */
-    public void remove(@Nullable T object) {
+    public void remove(@NonNull T object) {
         final int position;
-        final boolean remove;
+        final boolean removed;
         synchronized (mLock) {
             position = getPosition(object);
-            remove = mObjects.remove(object);
+            removed = mObjects.remove(object);
         }
-        if (remove) {
+        if (removed) {
             notifyItemRemoved(position);
         }
     }
@@ -231,7 +256,9 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      * @param oldObject will be removed
      * @param newObject is added only when hte old item is removed
      */
-    public void replaceItem(@Nullable final T oldObject, @Nullable final T newObject) {
+    public void replaceItem(@NonNull final T oldObject, @NonNull final T newObject) {
+        requireNotNullItem(oldObject);
+        requireNotNullItem(newObject);
 
         final int position;
         synchronized (mLock) {
@@ -272,44 +299,60 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
     }
 
     /**
-     * replaces the data with the given list
+     * Swaps the data, removes all existing data and replaces them with a new set of data. {@link
+     * DiffUtil} will coordinate to update notifications. Make sure {@link #getItemId(Object)} is
+     * implemented correctly.
      *
-     * @param newObjects new data
+     * @param newObjects new set of data
+     * @see #isContentTheSame(Object, Object)
+     * @see #isItemTheSame(Object, Object)
      */
     @SuppressWarnings("ConstantConditions")
-    public void swap(@NonNull final List<T> newObjects) {
+    public void swap(@Nullable final List<T> newObjects) {
         if (newObjects == null) {
-            throw new IllegalStateException("the new list can't be null");
+            clear();
+        } else {
+            final DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+                @Override
+                public boolean areContentsTheSame(final int oldItemPosition,
+                        final int newItemPosition) {
+                    final T oldItem = mObjects.get(oldItemPosition);
+                    final T newItem = newObjects.get(newItemPosition);
+                    return isContentTheSame(oldItem, newItem);
+                }
+
+                @Override
+                public boolean areItemsTheSame(final int oldItemPosition,
+                        final int newItemPosition) {
+                    final T oldItem = mObjects.get(oldItemPosition);
+                    final T newItem = newObjects.get(newItemPosition);
+                    return isItemTheSame(oldItem, newItem);
+                }
+
+                @Override
+                public int getNewListSize() {
+                    return newObjects.size();
+                }
+
+                @Override
+                public int getOldListSize() {
+                    return mObjects.size();
+                }
+            });
+            synchronized (mLock) {
+                mObjects.clear();
+                for (final T item : newObjects) {
+                    requireNotNullItem(item);
+                    mObjects.add(item);
+                }
+            }
+            result.dispatchUpdatesTo(this);
         }
-        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
-            @Override
-            public boolean areContentsTheSame(final int oldItemPosition,
-                    final int newItemPosition) {
-                final T oldItem = mObjects.get(oldItemPosition);
-                final T newItem = newObjects.get(newItemPosition);
-                return isContentTheSame(oldItem, newItem);
-            }
+    }
 
-            @Override
-            public boolean areItemsTheSame(final int oldItemPosition, final int newItemPosition) {
-                final T oldItem = mObjects.get(oldItemPosition);
-                final T newItem = newObjects.get(newItemPosition);
-                return isItemTheSame(oldItem, newItem);
-            }
-
-            @Override
-            public int getNewListSize() {
-                return newObjects != null ? newObjects.size() : 0;
-            }
-
-            @Override
-            public int getOldListSize() {
-                return mObjects != null ? mObjects.size() : 0;
-            }
-        });
-        synchronized (mLock) {
-            mObjects = newObjects;
+    private static void requireNotNullItem(Object o) {
+        if (o == null) {
+            throw new IllegalStateException("null items are not allowed");
         }
-        result.dispatchUpdatesTo(this);
     }
 }
