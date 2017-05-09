@@ -367,9 +367,15 @@ public class ArrayAdapterTest {
     }
 
     @Test
-    public void getItemNotFound() throws Exception {
-        final String item = mAdapter.getItem(3);
+    public void getItemNotFoundReturnsNull() throws Exception {
+        assertThat(mAdapter.getItem(0)).isNull();
+        assertThat(mAdapter.getItem(5)).isNull();
+        assertThat(mAdapter.getItem(-1)).isNull();
 
+        mAdapter.add("A");
+        assertThat(mAdapter.getItem(0)).isEqualTo("A");
+        assertThat(mAdapter.getItem(5)).isNull();
+        assertThat(mAdapter.getItem(-1)).isNull();
     }
 
     @Test
