@@ -134,7 +134,7 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      * @param item for which a stable id should be generated
      * @return a identifier for the given item
      */
-    public abstract Object getItemId(T item);
+    public abstract Object getItemId(@NonNull T item);
 
     /**
      * Returns the position of the specified item in the array.
@@ -142,7 +142,7 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      * @param item The item to retrieve the position of.
      * @return The position of the specified item.
      */
-    public int getPosition(final T item) {
+    public int getPosition(@Nullable final T item) {
         return mObjects.indexOf(item);
     }
 
@@ -222,7 +222,7 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         }
     }
 
-    public void replaceItem(final T oldObject, final T newObject) {
+    public void replaceItem(@Nullable final T oldObject, @Nullable final T newObject) {
         final int position = getPosition(oldObject);
 
         synchronized (mLock) {
@@ -247,7 +247,7 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      *
      * @param comparator The comparator used to sort the objects contained in this adapter.
      */
-    public void sort(Comparator<? super T> comparator) {
+    public void sort(@NonNull Comparator<? super T> comparator) {
         final ArrayList<T> copy = new ArrayList<>(mObjects);
         Collections.sort(copy, comparator);
         swap(copy);
@@ -258,7 +258,7 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      *
      * @param newObjects new data
      */
-    public void swap(final List<T> newObjects) {
+    public void swap(@NonNull final List<T> newObjects) {
         DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
             @Override
             public boolean areContentsTheSame(final int oldItemPosition,
