@@ -379,6 +379,18 @@ public class ArrayAdapterTest {
     }
 
     @Test
+    public void getPosition() throws Exception {
+        assertThat(mAdapter.getPosition("X")).isEqualTo(-1);
+
+        mAdapter.addAll("A", "B", "C");
+        assertThat(mAdapter.getPosition("A")).isEqualTo(0);
+        assertThat(mAdapter.getPosition("B")).isEqualTo(1);
+        assertThat(mAdapter.getPosition("C")).isEqualTo(2);
+        assertThat(mAdapter.getPosition("X")).isEqualTo(-1);
+
+    }
+
+    @Test
     public void insert() throws Exception {
         mAdapter.add("A");
         mAdapter.add("B");

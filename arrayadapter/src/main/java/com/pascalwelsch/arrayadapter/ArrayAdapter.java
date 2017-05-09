@@ -140,7 +140,7 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      */
     @Nullable
     public T getItem(final int position) {
-        if (position >= mObjects.size()) {
+        if (position < 0 || position >= mObjects.size()) {
             return null;
         }
         return mObjects.get(position);
