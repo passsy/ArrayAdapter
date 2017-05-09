@@ -12,7 +12,7 @@
 
 ```gradle
 dependencies {
-    compile 'com.pascalwelsch.arrayadapter:arrayadapater:1.0.0'
+    compile 'com.pascalwelsch.arrayadapter:arrayadapter:1.0.0'
 }
 ```
 
