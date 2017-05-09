@@ -142,7 +142,6 @@ public class ArrayAdapterTest {
 
     @Test
     public void addAllListContainingNull() throws Exception {
-
         final ArrayList<String> nullList = new ArrayList<>();
         nullList.add("A");
         nullList.add(null);
@@ -207,7 +206,6 @@ public class ArrayAdapterTest {
 
     @Test
     public void addAllVarargsListContainingNull() throws Exception {
-
         final TestAdapter adapter = new TestAdapter();
         try {
             adapter.addAll("A", null, "C");
@@ -616,7 +614,6 @@ public class ArrayAdapterTest {
     @SuppressWarnings("ConstantConditions")
     @Test
     public void replaceItemWithNullThrows() throws Exception {
-
         final TestAdapter adapter = new TestAdapter();
         try {
             adapter.replaceItem("A", null);
@@ -648,7 +645,6 @@ public class ArrayAdapterTest {
     @SuppressWarnings("ConstantConditions")
     @Test
     public void replaceNullWithItemThrow() throws Exception {
-
         final TestAdapter adapter = new TestAdapter();
         try {
             adapter.replaceItem(null, "A");
@@ -853,7 +849,6 @@ public class ArrayAdapterTest {
     @Test
     public void swap_onlyDataChanged() throws Exception {
         final UserAdapter adapter = new UserAdapter();
-
         adapter.add(new User("A", "1"));
         adapter.add(new User("B", "2"));
         adapter.add(new User("C", "3"));

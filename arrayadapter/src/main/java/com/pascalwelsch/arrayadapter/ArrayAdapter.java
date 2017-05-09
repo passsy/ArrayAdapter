@@ -27,9 +27,11 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Simple adapter implementation analog to {@link android.widget.ArrayAdapter} for {@link
- * android.support.v7.widget.RecyclerView}. Holds to a list of objects of type {@link T}
+ * Simple {@link RecyclerView.Adapter} implementation analog to {@link android.widget.ArrayAdapter}
+ * for {@link android.support.v7.widget.RecyclerView}. Holds to a list of objects of type {@link T}
  *
+ * @param <T>  item type (a immutable pojo works best)
+ * @param <VH> {@link RecyclerView.ViewHolder} for item {@link T}
  * @author Pascal Welsch on 04.07.14.
  *         Major update 09.05.17.
  */
