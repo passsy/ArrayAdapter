@@ -40,6 +40,11 @@ public class ArrayAdapterTest {
     private static class TestAdapter extends ArrayAdapter<String, RecyclerView.ViewHolder> {
 
         @Override
+        public Object getItemId(final String item) {
+            return item;
+        }
+
+        @Override
         public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
 
         }
@@ -50,6 +55,63 @@ public class ArrayAdapterTest {
             return null;
         }
 
+    }
+
+    private class User {
+
+        private final String id;
+
+        private final String name;
+
+        private User(final String name, final String id) {
+            this.name = name;
+            this.id = id;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof User)) {
+                return false;
+            }
+
+            final User user = (User) o;
+
+            if (name != null ? !name.equals(user.name) : user.name != null) {
+                return false;
+            }
+            return id != null ? id.equals(user.id) : user.id == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name != null ? name.hashCode() : 0;
+            result = 31 * result + (id != null ? id.hashCode() : 0);
+            return result;
+        }
+    }
+
+    private class UserAdapter extends ArrayAdapter<User, RecyclerView.ViewHolder> {
+
+        @Override
+        public Object getItemId(final User item) {
+            // return id, not item
+            return item.id;
+        }
+
+        @Override
+        public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
+
+        }
+
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(final ViewGroup parent,
+                final int viewType) {
+            return null;
+        }
     }
 
     private TestAdapter mAdapter;
@@ -366,18 +428,39 @@ public class ArrayAdapterTest {
     }
 
     @Test
-    public void replaceItem() throws Exception {
-        mAdapter.add("A");
-        mAdapter.add("B");
-        mAdapter.add("C");
-        assertThat(mAdapter.getItemCount()).isEqualTo(3);
+    public void replaceItemByUpdatingIt() throws Exception {
+        final UserAdapter adapter = new UserAdapter();
+        adapter.add(new User("A", "1"));
+        adapter.add(new User("B", "2"));
+        adapter.add(new User("C", "3"));
+        assertThat(adapter.getItemCount()).isEqualTo(3);
 
         final RecyclerView.AdapterDataObserver observer =
                 mock(RecyclerView.AdapterDataObserver.class);
-        mAdapter.registerAdapterDataObserver(observer);
-        mAdapter.replaceItem("B", "Z");
-        assertThat(mAdapter.getItemCount()).isEqualTo(3);
-        assertThat(mAdapter.getItem(1)).isEqualTo("Z");
+        adapter.registerAdapterDataObserver(observer);
+        final User newUser = new User("Z", "2");
+        adapter.replaceItem(new User("B", "2"), newUser);
+        assertThat(adapter.getItemCount()).isEqualTo(3);
+        assertThat(adapter.getItem(1)).isEqualTo(newUser);
+        verify(observer).onItemRangeChanged(1, 1, newUser);
+        verifyNoMoreInteractions(observer);
+    }
+
+    @Test
+    public void replaceItemWithDifferentItem() throws Exception {
+        final UserAdapter adapter = new UserAdapter();
+        adapter.add(new User("A", "1"));
+        adapter.add(new User("B", "2"));
+        adapter.add(new User("C", "3"));
+        assertThat(adapter.getItemCount()).isEqualTo(3);
+
+        final RecyclerView.AdapterDataObserver observer =
+                mock(RecyclerView.AdapterDataObserver.class);
+        adapter.registerAdapterDataObserver(observer);
+        final User newUser = new User("Z", "otherId");
+        adapter.replaceItem(new User("B", "2"), newUser);
+        assertThat(adapter.getItemCount()).isEqualTo(3);
+        assertThat(adapter.getItem(1)).isEqualTo(newUser);
         verify(observer).onItemRangeRemoved(1, 1);
         verify(observer).onItemRangeInserted(1, 1);
         verifyNoMoreInteractions(observer);
@@ -481,12 +564,7 @@ public class ArrayAdapterTest {
         final RecyclerView.AdapterDataObserver observer =
                 mock(RecyclerView.AdapterDataObserver.class);
         mAdapter.registerAdapterDataObserver(observer);
-        mAdapter.swap(list, new ArrayAdapter.StableIdProvider<String>() {
-            @Override
-            public Object getId(final String item) {
-                return item;
-            }
-        });
+        mAdapter.swap(list);
         assertThat(mAdapter.getItemCount()).isEqualTo(3);
         assertThat(mAdapter.getItem(0)).isEqualTo("D");
         assertThat(mAdapter.getItem(1)).isEqualTo("B");
@@ -516,16 +594,81 @@ public class ArrayAdapterTest {
         final RecyclerView.AdapterDataObserver observer =
                 mock(RecyclerView.AdapterDataObserver.class);
         mAdapter.registerAdapterDataObserver(observer);
-        mAdapter.swap(list, new ArrayAdapter.StableIdProvider<String>() {
-            @Override
-            public Object getId(final String item) {
-                return item;
-            }
-        });
+        mAdapter.swap(list);
         assertThat(mAdapter.getItemCount()).isEqualTo(3);
         assertThat(mAdapter.getItem(0)).isEqualTo("A");
         assertThat(mAdapter.getItem(1)).isEqualTo("B");
         assertThat(mAdapter.getItem(2)).isEqualTo("C");
         verifyZeroInteractions(observer);
+    }
+
+    @Test
+    public void swap_getItemIdNotStable() throws Exception {
+        mAdapter = new TestAdapter() {
+            int i = 0;
+
+            @Override
+            public Object getItemId(final String item) {
+                // always return a different id
+                return i++;
+            }
+        };
+
+        mAdapter.add("A");
+        mAdapter.add("B");
+        mAdapter.add("C");
+
+        assertThat(mAdapter.getItemCount()).isEqualTo(3);
+        assertThat(mAdapter.getItem(0)).isEqualTo("A");
+        assertThat(mAdapter.getItem(1)).isEqualTo("B");
+        assertThat(mAdapter.getItem(2)).isEqualTo("C");
+
+        List<String> list = new ArrayList<>();
+        list.add("A");
+        list.add("B");
+        list.add("C");
+        final RecyclerView.AdapterDataObserver observer =
+                mock(RecyclerView.AdapterDataObserver.class);
+        mAdapter.registerAdapterDataObserver(observer);
+        mAdapter.swap(list);
+        assertThat(mAdapter.getItemCount()).isEqualTo(3);
+        assertThat(mAdapter.getItem(0)).isEqualTo("A");
+        assertThat(mAdapter.getItem(1)).isEqualTo("B");
+        assertThat(mAdapter.getItem(2)).isEqualTo("C");
+
+        verify(observer).onItemRangeRemoved(0, 3);
+        verify(observer).onItemRangeInserted(0, 3);
+        verifyNoMoreInteractions(observer);
+    }
+
+    @Test
+    public void swap_onlyDataChanged() throws Exception {
+        final UserAdapter adapter = new UserAdapter();
+
+        adapter.add(new User("A", "1"));
+        adapter.add(new User("B", "2"));
+        adapter.add(new User("C", "3"));
+
+        assertThat(adapter.getItemCount()).isEqualTo(3);
+        assertThat(adapter.getItem(0)).isEqualTo(new User("A", "1"));
+        assertThat(adapter.getItem(1)).isEqualTo(new User("B", "2"));
+        assertThat(adapter.getItem(2)).isEqualTo(new User("C", "3"));
+
+        final List<User> list = new ArrayList<>();
+        // change items, not the id
+        list.add(new User("A'", "1"));
+        list.add(new User("B'", "2"));
+        list.add(new User("C'", "3"));
+        final RecyclerView.AdapterDataObserver observer =
+                mock(RecyclerView.AdapterDataObserver.class);
+        adapter.registerAdapterDataObserver(observer);
+        adapter.swap(list);
+        assertThat(adapter.getItemCount()).isEqualTo(3);
+        assertThat(adapter.getItem(0)).isEqualTo(new User("A'", "1"));
+        assertThat(adapter.getItem(1)).isEqualTo(new User("B'", "2"));
+        assertThat(adapter.getItem(2)).isEqualTo(new User("C'", "3"));
+
+        verify(observer).onItemRangeChanged(0, 3, null);
+        verifyNoMoreInteractions(observer);
     }
 }
