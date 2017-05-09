@@ -31,6 +31,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Java6Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -241,23 +242,12 @@ public class ArrayAdapterTest {
 
     @Test
     public void addNull() throws Exception {
-        assertThat(mAdapter.getItemCount()).isEqualTo(0);
-
-        final RecyclerView.AdapterDataObserver observer =
-                mock(RecyclerView.AdapterDataObserver.class);
-        mAdapter.registerAdapterDataObserver(observer);
-
-        mAdapter.add(null);
-        assertThat(mAdapter.getItemCount()).isEqualTo(1);
-        assertThat(mAdapter.getItem(0)).isNull();
-        verify(observer).onItemRangeInserted(0, 1);
-
-        mAdapter.add(null);
-        assertThat(mAdapter.getItemCount()).isEqualTo(2);
-        assertThat(mAdapter.getItem(1)).isNull();
-        verify(observer).onItemRangeInserted(1, 1);
-
-        verifyNoMoreInteractions(observer);
+        try {
+            mAdapter.add(null);
+            fail("did not throw");
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("null");
+        }
     }
 
     @Test
@@ -309,6 +299,16 @@ public class ArrayAdapterTest {
     }
 
     @Test
+    public void constructorNull() throws Exception {
+        try {
+            final TestAdapter testAdapter = new TestAdapter(null);
+            fail("did no throw");
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("null");
+        }
+    }
+
+    @Test
     public void constructorWithList() throws Exception {
         final ArrayList<String> list = new ArrayList<>();
         list.add("A");
@@ -322,6 +322,12 @@ public class ArrayAdapterTest {
     public void constructorWithoutArgs() throws Exception {
         final TestAdapter testAdapter = new TestAdapter();
         assertThat(testAdapter.getItemCount()).isEqualTo(0);
+    }
+
+    @Test
+    public void getItemNotFound() throws Exception {
+        final String item = mAdapter.getItem(3);
+
     }
 
     @Test
@@ -355,20 +361,17 @@ public class ArrayAdapterTest {
     }
 
     @Test
-    public void insertNull() throws Exception {
+    public void insertNullThrows() throws Exception {
         mAdapter.add("A");
         mAdapter.add("B");
         mAdapter.add("C");
 
-        assertThat(mAdapter.getItemCount()).isEqualTo(3);
-        final RecyclerView.AdapterDataObserver observer =
-                mock(RecyclerView.AdapterDataObserver.class);
-        mAdapter.registerAdapterDataObserver(observer);
-        mAdapter.insert(null, 1);
-        assertThat(mAdapter.getItemCount()).isEqualTo(4);
-        assertThat(mAdapter.getItem(1)).isEqualTo(null);
-        verify(observer).onItemRangeInserted(1, 1);
-        verifyNoMoreInteractions(observer);
+        try {
+            mAdapter.insert(null, 1);
+            fail("did not throw");
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("null");
+        }
     }
 
     @Test
@@ -393,7 +396,7 @@ public class ArrayAdapterTest {
             @Override
             public Object getItemId(@NonNull final String item) {
                 // equal id, not same object
-                return Integer.valueOf(1);
+                return new Integer(1);
             }
         };
         // always the same when the same id gets returned
@@ -465,19 +468,18 @@ public class ArrayAdapterTest {
     @Test
     public void removeNull() throws Exception {
         mAdapter.add("A");
-        mAdapter.add(null);
         mAdapter.add("B");
         mAdapter.add("C");
-        assertThat(mAdapter.getItemCount()).isEqualTo(4);
+        assertThat(mAdapter.getItemCount()).isEqualTo(3);
 
         final RecyclerView.AdapterDataObserver observer =
                 mock(RecyclerView.AdapterDataObserver.class);
         mAdapter.registerAdapterDataObserver(observer);
+
+        // does nothing
         mAdapter.remove(null);
         assertThat(mAdapter.getItemCount()).isEqualTo(3);
-        assertThat(mAdapter.getItem(1)).isEqualTo("B");
-        verify(observer).onItemRangeRemoved(1, 1);
-        verifyNoMoreInteractions(observer);
+        verifyZeroInteractions(observer);
     }
 
     @Test
@@ -689,13 +691,20 @@ public class ArrayAdapterTest {
     }
 
     @Test
-    public void swapNullThrows() throws Exception {
-        final UserAdapter adapter = new UserAdapter();
-        try {
-            adapter.swap(null);
-        } catch (IllegalStateException e) {
-            assertThat(e).hasMessageContaining("null");
-        }
+    public void swapNullClears() throws Exception {
+        mAdapter.add("A");
+        mAdapter.add("B");
+        mAdapter.add("C");
+
+        assertThat(mAdapter.getItemCount()).isEqualTo(3);
+
+        final RecyclerView.AdapterDataObserver observer =
+                mock(RecyclerView.AdapterDataObserver.class);
+        mAdapter.registerAdapterDataObserver(observer);
+        mAdapter.swap(null);
+        assertThat(mAdapter.getItemCount()).isEqualTo(0);
+        verify(observer).onItemRangeRemoved(0, 3);
+        verifyNoMoreInteractions(observer);
     }
 
     @Test
