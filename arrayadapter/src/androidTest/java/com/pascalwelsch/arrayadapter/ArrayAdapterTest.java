@@ -140,6 +140,22 @@ public class ArrayAdapterTest {
     }
 
     @Test
+    public void addAllListContainingNull() throws Exception {
+
+        final ArrayList<String> nullList = new ArrayList<>();
+        nullList.add("A");
+        nullList.add(null);
+        nullList.add("C");
+        final TestAdapter adapter = new TestAdapter();
+        try {
+            adapter.addAll(nullList);
+            fail("did no throw");
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("null");
+        }
+    }
+
+    @Test
     public void addAllMultiple() throws Exception {
         mAdapter.add("A");
         mAdapter.add("B");
@@ -186,6 +202,18 @@ public class ArrayAdapterTest {
         mAdapter.addAll();
         assertThat(mAdapter.getItemCount()).isEqualTo(0);
         verifyZeroInteractions(observer);
+    }
+
+    @Test
+    public void addAllVarargsListContainingNull() throws Exception {
+
+        final TestAdapter adapter = new TestAdapter();
+        try {
+            adapter.addAll("A", null, "C");
+            fail("did no throw");
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("null");
+        }
     }
 
     @Test
@@ -316,6 +344,20 @@ public class ArrayAdapterTest {
         list.add("C");
         final TestAdapter testAdapter = new TestAdapter(list);
         assertThat(testAdapter.getItemCount()).isEqualTo(3);
+    }
+
+    @Test
+    public void constructorWithNullValueInList() throws Exception {
+        final ArrayList<String> nullList = new ArrayList<>();
+        nullList.add("A");
+        nullList.add(null);
+        nullList.add("C");
+        try {
+            final TestAdapter testAdapter = new TestAdapter(nullList);
+            fail("did no throw");
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("null");
+        }
     }
 
     @Test
@@ -562,6 +604,18 @@ public class ArrayAdapterTest {
     }
 
     @Test
+    public void replaceItemWithNullThrows() throws Exception {
+
+        final TestAdapter adapter = new TestAdapter();
+        try {
+            adapter.replaceItem("A", null);
+            fail("did no throw");
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("null");
+        }
+    }
+
+    @Test
     public void replaceNonExistentItem() throws Exception {
         final UserAdapter adapter = new UserAdapter();
         adapter.add(new User("A", "1"));
@@ -578,6 +632,18 @@ public class ArrayAdapterTest {
         assertThat(adapter.getItem(1)).isEqualTo(new User("B", "2"));
         assertThat(adapter.getItem(2)).isEqualTo(new User("C", "3"));
         verifyZeroInteractions(observer);
+    }
+
+    @Test
+    public void replaceNullWithItemThrow() throws Exception {
+
+        final TestAdapter adapter = new TestAdapter();
+        try {
+            adapter.replaceItem(null, "A");
+            fail("did no throw");
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("null");
+        }
     }
 
     @Before
