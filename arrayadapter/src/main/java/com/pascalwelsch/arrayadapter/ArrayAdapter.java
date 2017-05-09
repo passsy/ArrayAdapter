@@ -32,6 +32,7 @@ import java.util.List;
  *
  * Created by Pascal Welsch on 04.07.14.
  */
+@SuppressWarnings("WeakerAccess")
 public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         extends RecyclerView.Adapter<VH> {
 
@@ -88,7 +89,8 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      *
      * @param items The items to add at the end of the array.
      */
-    public void addAll(T... items) {
+    @SafeVarargs
+    public final void addAll(T... items) {
         final int length = items.length;
         if (length == 0) {
             return;
@@ -274,7 +276,11 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      *
      * @param newObjects new data
      */
+    @SuppressWarnings("ConstantConditions")
     public void swap(@NonNull final List<T> newObjects) {
+        if (newObjects == null) {
+            throw new IllegalStateException("the new list can't be null");
+        }
         DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
             @Override
             public boolean areContentsTheSame(final int oldItemPosition,

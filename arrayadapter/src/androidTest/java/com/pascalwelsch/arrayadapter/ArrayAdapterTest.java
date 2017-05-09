@@ -20,6 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
@@ -39,8 +41,16 @@ public class ArrayAdapterTest {
 
     private static class TestAdapter extends ArrayAdapter<String, RecyclerView.ViewHolder> {
 
+        public TestAdapter(@Nullable final List<String> objects) {
+            super(objects);
+        }
+
+        public TestAdapter() {
+            super();
+        }
+
         @Override
-        public Object getItemId(final String item) {
+        public Object getItemId(@NonNull final String item) {
             return item;
         }
 
@@ -97,7 +107,7 @@ public class ArrayAdapterTest {
     private class UserAdapter extends ArrayAdapter<User, RecyclerView.ViewHolder> {
 
         @Override
-        public Object getItemId(final User item) {
+        public Object getItemId(@NonNull final User item) {
             // return id, not item
             return item.id;
         }
@@ -293,6 +303,28 @@ public class ArrayAdapterTest {
     }
 
     @Test
+    public void constructorEmptyList() throws Exception {
+        final TestAdapter testAdapter = new TestAdapter(new ArrayList<String>());
+        assertThat(testAdapter.getItemCount()).isEqualTo(0);
+    }
+
+    @Test
+    public void constructorWithList() throws Exception {
+        final ArrayList<String> list = new ArrayList<>();
+        list.add("A");
+        list.add("B");
+        list.add("C");
+        final TestAdapter testAdapter = new TestAdapter(list);
+        assertThat(testAdapter.getItemCount()).isEqualTo(3);
+    }
+
+    @Test
+    public void constructorWithoutArgs() throws Exception {
+        final TestAdapter testAdapter = new TestAdapter();
+        assertThat(testAdapter.getItemCount()).isEqualTo(0);
+    }
+
+    @Test
     public void insert() throws Exception {
         mAdapter.add("A");
         mAdapter.add("B");
@@ -337,6 +369,47 @@ public class ArrayAdapterTest {
         assertThat(mAdapter.getItem(1)).isEqualTo(null);
         verify(observer).onItemRangeInserted(1, 1);
         verifyNoMoreInteractions(observer);
+    }
+
+    @Test
+    public void isContentTheSame() throws Exception {
+        assertThat(mAdapter.isContentTheSame(null, null)).isTrue();
+        assertThat(mAdapter.isContentTheSame(null, "A")).isFalse();
+        assertThat(mAdapter.isContentTheSame("A", null)).isFalse();
+        assertThat(mAdapter.isContentTheSame("A", "B")).isFalse();
+        assertThat(mAdapter.isContentTheSame("A", "A")).isTrue();
+    }
+
+    @Test
+    public void isItemTheSame() throws Exception {
+        assertThat(mAdapter.isItemTheSame(null, null)).isTrue();
+        assertThat(mAdapter.isItemTheSame(null, "A")).isFalse();
+        assertThat(mAdapter.isItemTheSame("A", null)).isFalse();
+        assertThat(mAdapter.isItemTheSame("A", "A")).isTrue();
+        assertThat(mAdapter.isItemTheSame("A", "B")).isFalse();
+
+        mAdapter = new TestAdapter() {
+            @SuppressWarnings("UnnecessaryBoxing")
+            @Override
+            public Object getItemId(@NonNull final String item) {
+                // equal id, not same object
+                return Integer.valueOf(1);
+            }
+        };
+        // always the same when the same id gets returned
+        assertThat(mAdapter.isItemTheSame("A", "B")).isTrue();
+
+        mAdapter = new TestAdapter() {
+            @Override
+            public Object getItemId(@NonNull final String item) {
+                if ("nullItemId".equals(item)) {
+                    return null;
+                }
+                return item;
+            }
+        };
+        assertThat(mAdapter.isItemTheSame("nullItemId", "B")).isFalse();
+        assertThat(mAdapter.isItemTheSame("B", "nullItemId")).isFalse();
     }
 
     @Test
@@ -616,6 +689,16 @@ public class ArrayAdapterTest {
     }
 
     @Test
+    public void swapNullThrows() throws Exception {
+        final UserAdapter adapter = new UserAdapter();
+        try {
+            adapter.swap(null);
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessageContaining("null");
+        }
+    }
+
+    @Test
     public void swapSameList() throws Exception {
         mAdapter.add("A");
         mAdapter.add("B");
@@ -647,7 +730,7 @@ public class ArrayAdapterTest {
             int i = 0;
 
             @Override
-            public Object getItemId(final String item) {
+            public Object getItemId(@NonNull final String item) {
                 // always return a different id
                 return i++;
             }
