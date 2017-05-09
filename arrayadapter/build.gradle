@@ -22,7 +22,12 @@ android {
         }
         debug {
             // output coverage with ./gradlew clean build createDebugCoverageReport
-            testCoverageEnabled true
+            testCoverageEnabled gradle.startParameter.taskNames.any { name ->
+                name.matches(".*AndroidTest.*") ||
+                        name.matches(".*Check.*") ||
+                        name.matches(".*create.*CoverageReport.*") ||
+                        name.matches("tasks")
+            }
         }
     }
 
