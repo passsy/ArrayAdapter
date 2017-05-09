@@ -45,6 +45,7 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
 
     private final List<T> mObjects = new ArrayList<>();
 
+    @SuppressWarnings("ConstantConditions")
     public ArrayAdapter(@NonNull final List<T> objects) {
         if (objects == null) {
             throw new IllegalStateException("null is not supported. Use an empty list.");

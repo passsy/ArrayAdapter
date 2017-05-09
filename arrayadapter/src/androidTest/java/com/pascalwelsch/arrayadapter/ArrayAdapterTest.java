@@ -42,7 +42,7 @@ public class ArrayAdapterTest {
 
     private static class TestAdapter extends ArrayAdapter<String, RecyclerView.ViewHolder> {
 
-        public TestAdapter(@Nullable final List<String> objects) {
+        TestAdapter(@Nullable final List<String> objects) {
             super(objects);
         }
 
@@ -79,6 +79,7 @@ public class ArrayAdapterTest {
             this.id = id;
         }
 
+        @SuppressWarnings("SimplifiableIfStatement")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {
@@ -268,6 +269,7 @@ public class ArrayAdapterTest {
         verifyNoMoreInteractions(observer);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void addNull() throws Exception {
         try {
@@ -329,7 +331,7 @@ public class ArrayAdapterTest {
     @Test
     public void constructorNull() throws Exception {
         try {
-            final TestAdapter testAdapter = new TestAdapter(null);
+            new TestAdapter(null);
             fail("did no throw");
         } catch (IllegalStateException e) {
             assertThat(e).hasMessageContaining("null");
@@ -353,7 +355,7 @@ public class ArrayAdapterTest {
         nullList.add(null);
         nullList.add("C");
         try {
-            final TestAdapter testAdapter = new TestAdapter(nullList);
+            new TestAdapter(nullList);
             fail("did no throw");
         } catch (IllegalStateException e) {
             assertThat(e).hasMessageContaining("null");
@@ -408,6 +410,7 @@ public class ArrayAdapterTest {
         verifyNoMoreInteractions(observer);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void insertNullThrows() throws Exception {
         mAdapter.add("A");
@@ -440,7 +443,7 @@ public class ArrayAdapterTest {
         assertThat(mAdapter.isItemTheSame("A", "B")).isFalse();
 
         mAdapter = new TestAdapter() {
-            @SuppressWarnings("UnnecessaryBoxing")
+            @SuppressWarnings({"UnnecessaryBoxing", "UseValueOf"})
             @Override
             public Object getItemId(@NonNull final String item) {
                 // equal id, not same object
@@ -513,6 +516,7 @@ public class ArrayAdapterTest {
         verifyZeroInteractions(observer);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void removeNull() throws Exception {
         mAdapter.add("A");
@@ -609,6 +613,7 @@ public class ArrayAdapterTest {
         verifyNoMoreInteractions(observer);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void replaceItemWithNullThrows() throws Exception {
 
@@ -640,6 +645,7 @@ public class ArrayAdapterTest {
         verifyZeroInteractions(observer);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void replaceNullWithItemThrow() throws Exception {
 
