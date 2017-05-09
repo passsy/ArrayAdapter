@@ -431,7 +431,8 @@ public class ArrayAdapterTest {
     public void replaceItemByUpdatingIt() throws Exception {
         final UserAdapter adapter = new UserAdapter();
         adapter.add(new User("A", "1"));
-        adapter.add(new User("B", "2"));
+        final User userB = new User("B", "2");
+        adapter.add(userB);
         adapter.add(new User("C", "3"));
         assertThat(adapter.getItemCount()).isEqualTo(3);
 
@@ -439,11 +440,30 @@ public class ArrayAdapterTest {
                 mock(RecyclerView.AdapterDataObserver.class);
         adapter.registerAdapterDataObserver(observer);
         final User newUser = new User("Z", "2");
-        adapter.replaceItem(new User("B", "2"), newUser);
+        adapter.replaceItem(userB, newUser);
         assertThat(adapter.getItemCount()).isEqualTo(3);
         assertThat(adapter.getItem(1)).isEqualTo(newUser);
         verify(observer).onItemRangeChanged(1, 1, newUser);
         verifyNoMoreInteractions(observer);
+    }
+
+    @Test
+    public void replaceItemUiUnchanged() throws Exception {
+        final UserAdapter adapter = new UserAdapter();
+        adapter.add(new User("A", "1"));
+        final User userB = new User("B", "2");
+        adapter.add(userB);
+        adapter.add(new User("C", "3"));
+        assertThat(adapter.getItemCount()).isEqualTo(3);
+
+        final RecyclerView.AdapterDataObserver observer =
+                mock(RecyclerView.AdapterDataObserver.class);
+        adapter.registerAdapterDataObserver(observer);
+        final User newUserB = new User("B", "2");
+        adapter.replaceItem(userB, newUserB);
+        assertThat(adapter.getItemCount()).isEqualTo(3);
+        assertThat(adapter.getItem(1)).isEqualTo(newUserB);
+        verifyZeroInteractions(observer);
     }
 
     @Test
@@ -464,6 +484,25 @@ public class ArrayAdapterTest {
         verify(observer).onItemRangeRemoved(1, 1);
         verify(observer).onItemRangeInserted(1, 1);
         verifyNoMoreInteractions(observer);
+    }
+
+    @Test
+    public void replaceNonExistentItem() throws Exception {
+        final UserAdapter adapter = new UserAdapter();
+        adapter.add(new User("A", "1"));
+        adapter.add(new User("B", "2"));
+        adapter.add(new User("C", "3"));
+        assertThat(adapter.getItemCount()).isEqualTo(3);
+
+        final RecyclerView.AdapterDataObserver observer =
+                mock(RecyclerView.AdapterDataObserver.class);
+        adapter.registerAdapterDataObserver(observer);
+        adapter.replaceItem(new User("X", "10"), new User("Y", "11"));
+        assertThat(adapter.getItemCount()).isEqualTo(3);
+        assertThat(adapter.getItem(0)).isEqualTo(new User("A", "1"));
+        assertThat(adapter.getItem(1)).isEqualTo(new User("B", "2"));
+        assertThat(adapter.getItem(2)).isEqualTo(new User("C", "3"));
+        verifyZeroInteractions(observer);
     }
 
     @Before

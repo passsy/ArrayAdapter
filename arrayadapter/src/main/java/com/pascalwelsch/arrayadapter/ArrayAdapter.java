@@ -222,21 +222,37 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         }
     }
 
+    /**
+     * replaces the old with the new item. The new item will not be added when the old one is not
+     * found.
+     *
+     * @param oldObject will be removed
+     * @param newObject is added only when hte old item is removed
+     */
     public void replaceItem(@Nullable final T oldObject, @Nullable final T newObject) {
-        final int position = getPosition(oldObject);
 
+        final int position;
         synchronized (mLock) {
+            position = getPosition(oldObject);
+            if (position == -1) {
+                // not found, don't replace
+                return;
+            }
+
             mObjects.remove(position);
             mObjects.add(position, newObject);
         }
 
         if (isItemTheSame(oldObject, newObject)) {
-            if (!isContentTheSame(oldObject, newObject)) {
-                // no notify, content did not change
+            if (isContentTheSame(oldObject, newObject)) {
+                // visible content hasn't changed, don't notify
                 return;
             }
+
+            // item with same stable id has changed
             notifyItemChanged(position, newObject);
         } else {
+            // item replaced with another one with a different id
             notifyItemRemoved(position);
             notifyItemInserted(position);
         }
