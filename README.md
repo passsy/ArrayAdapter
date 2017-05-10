@@ -16,6 +16,43 @@ dependencies {
 }
 ```
 
+## Usage
+
+Given a [`User` pojo](https://gist.github.com/passsy/071890e492d2616644cd93c579ab7cf0) with a correct `equals`/`hashCode` implementation is used as data type for `UserAdapter`:
+
+```java
+public class UserAdapter extends ArrayAdapter<User, UserAdapter.ViewHolder> {
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+
+        private final TextView titleView;
+
+        public ViewHolder(final View itemView) {
+            super(itemView);
+            titleView = (TextView) itemView.findViewById(R.id.title)
+        }
+    }
+
+    @Nullable
+    @Override
+    public Object getItemId(@NonNull final User user) {
+        return user.getId();
+    }
+
+    @Override
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
+        final User item = getItem(position);
+        holder.titleView.setText(item.getName());
+    }
+
+    @Override
+    public ViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
+        final View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.itemview_user, parent, false);
+        return new ViewHolder(view);
+    }
+}
+```
 
 ## License
 
