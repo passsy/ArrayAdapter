@@ -4,7 +4,7 @@
 `RecyclerView` doesn't ship a ready to go `RecyclerView.Adapter` implementation as `ListView` did with the `ArrayAdapter`. This library is this missing `ArrayAdapter`.
 
 - Easy to use
-- Same API as `ArrayAdapter` for `ListView` 
+- Familiar API known from `ArrayAdapter` for `ListView` 
 - Notifies the `RecyclerView` correctly about changes (`notifyItem*()`) for smooth animations
 - Use `swap(List newItems)` to swap data. `DiffUtils` takes care of `notifyItem*()` calls
 
@@ -29,7 +29,7 @@ public class UserAdapter extends ArrayAdapter<User, UserAdapter.ViewHolder> {
 
         public ViewHolder(final View itemView) {
             super(itemView);
-            titleView = (TextView) itemView.findViewById(R.id.title)
+            titleView = (TextView) itemView.findViewById(R.id.title);
         }
     }
 
@@ -54,6 +54,35 @@ public class UserAdapter extends ArrayAdapter<User, UserAdapter.ViewHolder> {
 }
 ```
 
+## Power User APIs
+
+This `ArrayAdapter` implementation internally uses `DiffUtils` to detect changes on items.
+Two methods are relevant for this magic which you may want to override:
+
+### `boolean isItemTheSame(old, new)`
+
+checks if the `id` for both items (from `getItemId(T)`) is equal.
+Make sure `getItemId(T)` returns a stable id or at least the `item` itself.
+
+If the `id` differs `notifyItemRemoved` for the old and `notifyItemInserted` for the new item gets called, resulting in a call to `onBindViewHolder`.
+
+If the `id` is the same `isContentTheSame(old, new)` will be called.
+
+### `boolean isContentTheSame(old, new)`
+checks if the visible content if the item has changed.
+This method should return `true` when the visual representation of the items is the same. 
+When you only show the `name` of a `User` you should return `true` even when the name fields are equal even when other field are different.
+
+If the content has changed (returns `false`) `notifyItemChanged` will be called triggering a call to `onBindViewHolder`. 
+
+If the content is the same (returns `true`) no notify method is called and `onBindViewHolder` is not called, too.
+
+By default `isContentTheSame` performs an `equal` check on the two item. 
+That's why your pojo should implement `equals` correctly and it's recommended to use immutable objects.
+
+Override this method for an optimized change detection.
+
+ 
 ## License
 
 ```

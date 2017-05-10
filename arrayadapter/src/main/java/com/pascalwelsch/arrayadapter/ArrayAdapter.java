@@ -216,6 +216,8 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      * @param oldItem The position of the item in the old list
      * @param newItem The position of the item in the new list
      * @return True if the two items represent the same object or false if they are different.
+     *
+     * @see #getItemId(Object)
      */
     public boolean isItemTheSame(@Nullable final T oldItem, @Nullable final T newItem) {
 
