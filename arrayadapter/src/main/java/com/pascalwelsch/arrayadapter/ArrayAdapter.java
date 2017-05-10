@@ -69,12 +69,11 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      */
     public void add(@NonNull final T object) {
         requireNotNullItem(object);
-        final int position;
         synchronized (mLock) {
-            position = getItemCount();
+            final int position = getItemCount();
             mObjects.add(object);
+            notifyItemInserted(position);
         }
-        notifyItemInserted(position);
     }
 
     /**
@@ -87,15 +86,14 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         if (length == 0) {
             return;
         }
-        final int position;
         synchronized (mLock) {
-            position = getItemCount();
+            final int position = getItemCount();
             for (final T item : collection) {
                 requireNotNullItem(item);
                 mObjects.add(item);
             }
+            notifyItemRangeInserted(position, length);
         }
-        notifyItemRangeInserted(position, length);
     }
 
     /**
@@ -109,15 +107,14 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         if (length == 0) {
             return;
         }
-        final int position;
         synchronized (mLock) {
-            position = getItemCount();
+            final int position = getItemCount();
             for (final T item : items) {
                 requireNotNullItem(item);
                 mObjects.add(item);
             }
+            notifyItemRangeInserted(position, length);
         }
-        notifyItemRangeInserted(position, length);
     }
 
     /**
@@ -127,12 +124,11 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         if (mObjects.isEmpty()) {
             return;
         }
-        final int size;
         synchronized (mLock) {
-            size = getItemCount();
+            final int size = getItemCount();
             mObjects.clear();
+            notifyItemRangeRemoved(0, size);
         }
-        notifyItemRangeRemoved(0, size);
     }
 
     /**
@@ -185,8 +181,8 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         requireNotNullItem(object);
         synchronized (mLock) {
             mObjects.add(index, object);
+            notifyItemInserted(index);
         }
-        notifyItemInserted(index);
     }
 
     /**
@@ -219,7 +215,6 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      * @param oldItem The position of the item in the old list
      * @param newItem The position of the item in the new list
      * @return True if the two items represent the same object or false if they are different.
-     *
      * @see #getItemId(Object)
      */
     public boolean isItemTheSame(@Nullable final T oldItem, @Nullable final T newItem) {
@@ -243,15 +238,14 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
      * @param object The object to remove.
      */
     public void remove(@NonNull T object) {
-        final int position;
-        final boolean removed;
         synchronized (mLock) {
-            position = getPosition(object);
-            removed = mObjects.remove(object);
+            final int position = getPosition(object);
+            final boolean removed = mObjects.remove(object);
+            if (removed) {
+                notifyItemRemoved(position);
+            }
         }
-        if (removed) {
-            notifyItemRemoved(position);
-        }
+
     }
 
     /**
@@ -265,9 +259,8 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         requireNotNullItem(oldObject);
         requireNotNullItem(newObject);
 
-        final int position;
         synchronized (mLock) {
-            position = getPosition(oldObject);
+            final int position = getPosition(oldObject);
             if (position == -1) {
                 // not found, don't replace
                 return;
@@ -275,20 +268,20 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
 
             mObjects.remove(position);
             mObjects.add(position, newObject);
-        }
 
-        if (isItemTheSame(oldObject, newObject)) {
-            if (isContentTheSame(oldObject, newObject)) {
-                // visible content hasn't changed, don't notify
-                return;
+            if (isItemTheSame(oldObject, newObject)) {
+                if (isContentTheSame(oldObject, newObject)) {
+                    // visible content hasn't changed, don't notify
+                    return;
+                }
+
+                // item with same stable id has changed
+                notifyItemChanged(position, newObject);
+            } else {
+                // item replaced with another one with a different id
+                notifyItemRemoved(position);
+                notifyItemInserted(position);
             }
-
-            // item with same stable id has changed
-            notifyItemChanged(position, newObject);
-        } else {
-            // item replaced with another one with a different id
-            notifyItemRemoved(position);
-            notifyItemInserted(position);
         }
     }
 
@@ -317,41 +310,41 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         if (newObjects == null) {
             clear();
         } else {
-            final DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
-                @Override
-                public boolean areContentsTheSame(final int oldItemPosition,
-                        final int newItemPosition) {
-                    final T oldItem = mObjects.get(oldItemPosition);
-                    final T newItem = newObjects.get(newItemPosition);
-                    return isContentTheSame(oldItem, newItem);
-                }
-
-                @Override
-                public boolean areItemsTheSame(final int oldItemPosition,
-                        final int newItemPosition) {
-                    final T oldItem = mObjects.get(oldItemPosition);
-                    final T newItem = newObjects.get(newItemPosition);
-                    return isItemTheSame(oldItem, newItem);
-                }
-
-                @Override
-                public int getNewListSize() {
-                    return newObjects.size();
-                }
-
-                @Override
-                public int getOldListSize() {
-                    return mObjects.size();
-                }
-            });
             synchronized (mLock) {
+                final DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+                    @Override
+                    public boolean areContentsTheSame(final int oldItemPosition,
+                            final int newItemPosition) {
+                        final T oldItem = mObjects.get(oldItemPosition);
+                        final T newItem = newObjects.get(newItemPosition);
+                        return isContentTheSame(oldItem, newItem);
+                    }
+
+                    @Override
+                    public boolean areItemsTheSame(final int oldItemPosition,
+                            final int newItemPosition) {
+                        final T oldItem = mObjects.get(oldItemPosition);
+                        final T newItem = newObjects.get(newItemPosition);
+                        return isItemTheSame(oldItem, newItem);
+                    }
+
+                    @Override
+                    public int getNewListSize() {
+                        return newObjects.size();
+                    }
+
+                    @Override
+                    public int getOldListSize() {
+                        return mObjects.size();
+                    }
+                });
                 mObjects.clear();
                 for (final T item : newObjects) {
                     requireNotNullItem(item);
                     mObjects.add(item);
                 }
+                result.dispatchUpdatesTo(this);
             }
-            result.dispatchUpdatesTo(this);
         }
     }
 
