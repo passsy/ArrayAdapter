@@ -52,7 +52,10 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
         if (objects == null) {
             throw new IllegalStateException("null is not supported. Use an empty list.");
         }
-        addAll(objects);
+        for (final T item : objects) {
+            requireNotNullItem(item);
+            mObjects.add(item);
+        }
     }
 
     public ArrayAdapter() {
