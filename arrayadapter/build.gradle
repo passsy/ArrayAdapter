@@ -1,6 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'bintray-release'
-apply plugin: 'jacoco-android'
 
 android {
     compileSdkVersion COMPILE_SDK_VERSION
