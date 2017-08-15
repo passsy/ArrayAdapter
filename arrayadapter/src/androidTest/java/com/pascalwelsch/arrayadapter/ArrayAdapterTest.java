@@ -27,6 +27,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -376,6 +377,31 @@ public class ArrayAdapterTest {
         assertThat(mAdapter.getItem(0)).isEqualTo("A");
         assertThat(mAdapter.getItem(5)).isNull();
         assertThat(mAdapter.getItem(-1)).isNull();
+    }
+
+    @Test
+    public void getItems() throws Exception {
+        final TestAdapter adapter = new TestAdapter();
+        final List<String> emptyList = adapter.getItems();
+        assertThat(emptyList).isEqualTo(new ArrayList<>());
+
+        adapter.add("A");
+        // list returned from getItems did not change
+        assertThat(emptyList).isEqualTo(new ArrayList<>());
+
+        // the filled list will be returned when calling getItems() again
+        assertThat(adapter.getItems()).isEqualTo(Arrays.asList("A"));
+    }
+
+    @Test
+    public void getItemsReturnAnUnmodifiableList() throws Exception {
+        final TestAdapter adapter = new TestAdapter();
+        try {
+            adapter.getItems().add("A");
+            fail("did not throw");
+        } catch (UnsupportedOperationException e) {
+            assertThat(e).isInstanceOf(UnsupportedOperationException.class);
+        }
     }
 
     @Test
