@@ -162,6 +162,18 @@ public abstract class ArrayAdapter<T, VH extends RecyclerView.ViewHolder>
     public abstract Object getItemId(@NonNull T item);
 
     /**
+     * Returns the items in the adapter as a unmodifiable list. Use the mutate functions to change
+     * the items of this adapter ({@link #add(Object)}, {@link #remove(Object)}) or replace the list
+     * entirely ({#link {@link #swap(List)}})
+     *
+     * @return the current items in this adapter
+     */
+    @NonNull
+    public List<T> getItems() {
+        return Collections.unmodifiableList(new ArrayList<T>(mObjects));
+    }
+
+    /**
      * Returns the position of the specified item in the array.
      *
      * @param item The item to retrieve the position of.
